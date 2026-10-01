@@ -1,0 +1,10 @@
+Generated with the built-in image_gen tool, transparent_background=true.
+Reference: approved realistic Ace of Spades preview.
+Python (Pillow) adds the exact rank and suit lettering as approved by the user.
+
+Blank template prompt:
+Use case: precise-object-edit. Edit target: attached approved realistic Ace of Spades sprite. Remove ALL black printed graphics, both A corner ranks, both small spades and the centre spade, leaving a completely blank warm-white fine linen paper playing card. Preserve the card surface, outline, rounded corners, subtle physical edge, lighting, shadow, exact card location, portrait ratio 5:7, original straight overhead camera and transparent margins. The removed areas must have the same seamless fine paper texture as the rest of the card. No typography, symbols, logos, borders, graphics or marks anywhere on the face. Actual transparent background with alpha. Keep the image and card composition exactly the same as the reference. This blank is the production template for all 52 card faces with exact printed ranks added in Python.
+
+Card back prompt:
+Use case: precise-object-edit. Edit target: attached approved realistic Ace of Spades sprite. Create the BACK of this same premium casino playing card. Preserve the exact card silhouette, rounded corners, thickness, physical edge, dimensions and 5:7 portrait proportions, straight overhead view, lighting and tiny soft shadow. Replace all face printing with a refined royal/navy blue symmetrical classic casino card-back pattern, fine ivory geometric diamond lattice with restrained ornate corner motifs, no logos or text. Warm white rounded paper border of uniform width, printed pattern inside it. Realistic fine linen paper texture consistent with reference and matching realistic ceramic casino chips. Exactly one card, fully visible, centered with same transparent margins. Actual transparent background alpha. No scene, tabletop, props, extra cards or watermark.
+

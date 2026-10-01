@@ -14,7 +14,6 @@ def create_deck():
 #% randomly select card and deal
 import random
 def deal_card(deck):
-
     i = random.choice(range(len(deck)))
     card = deck[i]
     deck = deck[:i] + deck[i+1:]

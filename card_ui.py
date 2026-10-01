@@ -1,7 +1,10 @@
 import tkinter as tk
+from time import monotonic
 
 CARD_GAP = 10 #! leaves 10 pixels between edge of one card and next
-MAX_ROW_WIDTH = 1000 #! don't let an entire hand be wider than 1000 pixels
+MAX_ROW_WIDTH = 600 #! keep hands within the left play area, clear of the controls
+SHADOW_OFFSET = 4
+SHADOW_COLOR = "#0B3B2B"
 
 def card_filepath(card):
     suits = ("♠", "S", "♥", "H", "♦", "D", "♣", "C")
@@ -23,12 +26,14 @@ def create_hand_ui(canvas, center_x, center_y): #! dictionary -> one graphical h
         "center_x": center_x,
         "center_y": center_y,
         "cards": [],
+        "animation_timer": None,
     }
 
-def layout_hand(hand_ui):#! take however many cards currently exist and centre them around the hand's center_x
+def hand_positions(hand_ui):
+    # Calculate destinations without moving the cards yet.
     cards = hand_ui["cards"]
     if not cards:
-        return
+        return ()
 
     card_width = max(card["image"].width() for card in cards)
     spacing = card_width + CARD_GAP
@@ -37,26 +42,42 @@ def layout_hand(hand_ui):#! take however many cards currently exist and centre t
         #% don't let the cards run off-screen logic
         #% cards will overlap slightly instead of leaving the screen
     start_x = hand_ui["center_x"] - spacing * (len(cards) - 1) / 2
-    #% figures out where the first card must go
-    for position, card in enumerate(cards):
-        #% move every card to its proper position
-        hand_ui["canvas"].coords(
-            card["item_id"],
-            start_x + position * spacing,
-            hand_ui["center_y"],
-        )
+    return tuple((start_x + position * spacing, hand_ui["center_y"])
+                 for position in range(len(cards)))
+
+
+def move_card_image(hand_ui, card, x, y):
+    half_width = card["image"].width() / 2
+    half_height = card["image"].height() / 2
+    hand_ui["canvas"].coords(card["item_id"], x, y)
+    hand_ui["canvas"].coords(
+        card["shadow_id"],
+        x - half_width + SHADOW_OFFSET, y - half_height + SHADOW_OFFSET,
+        x + half_width + SHADOW_OFFSET, y + half_height + SHADOW_OFFSET,
+    )
+
+
+def layout_hand(hand_ui):
+    for card, (x, y) in zip(hand_ui["cards"], hand_positions(hand_ui)):
+        move_card_image(hand_ui, card, x, y)
+        # Keep each shadow underneath its card, including when cards overlap.
+        hand_ui["canvas"].tag_raise(card["shadow_id"])
+        hand_ui["canvas"].tag_raise(card["item_id"])
 
 def display_card_image(hand, hand_ui, hide_second=False):
     clear_hand(hand_ui)#% removes any previous graphical hand
     for position, card in enumerate(hand):
         add_card_image(card, hand_ui, position, face_down=hide_second and position == 1)
 
-def add_card_image(card, hand_ui, position, face_down=False):
+def add_card_image(card, hand_ui, position, face_down=False, arrange=True):
     if face_down:
         card_image = card_back_to_image()
     else:
         card_image = card_to_image(card)
 
+    shadow_id = hand_ui["canvas"].create_rectangle(
+        0, 0, 0, 0, fill=SHADOW_COLOR, outline=""
+    )
     item_id = hand_ui["canvas"].create_image( #%puts the card onto the canvas
         hand_ui["center_x"],
         hand_ui["center_y"],
@@ -64,8 +85,44 @@ def add_card_image(card, hand_ui, position, face_down=False):
         anchor="center",
     )
     # Keep the PhotoImage alive and the item ID available for movement or deletion.
-    hand_ui["cards"].insert(position, {"item_id": item_id, "image": card_image})
-    layout_hand(hand_ui)
+    hand_ui["cards"].insert(position, {
+        "item_id": item_id, "shadow_id": shadow_id, "image": card_image
+    })
+    if arrange:
+        layout_hand(hand_ui)
+
+def animate_card(hand_ui, position, start_x, start_y, on_complete, duration_ms=450):
+    canvas = hand_ui["canvas"]
+    cards = hand_ui["cards"]
+    starts = tuple((start_x, start_y) if index == position else canvas.coords(card["item_id"])
+                   for index, card in enumerate(cards))
+    destinations = hand_positions(hand_ui)
+    for card in cards:
+        canvas.tag_raise(card["shadow_id"])
+        canvas.tag_raise(card["item_id"])
+    started = monotonic()
+
+    def next_frame():
+        hand_ui["animation_timer"] = None
+        progress = min((monotonic() - started) * 1000 / duration_ms, 1)
+        eased = 1 - (1 - progress) ** 3  # Slow gently as the card lands.
+        for card, (from_x, from_y), (to_x, to_y) in zip(cards, starts, destinations):
+            x = from_x + (to_x - from_x) * eased
+            y = from_y + (to_y - from_y) * eased
+            move_card_image(hand_ui, card, x, y)
+        if progress < 1:
+            hand_ui["animation_timer"] = canvas.after(16, next_frame)
+        else:
+            on_complete()
+
+    next_frame()
+
+
+def cancel_hand_animation(hand_ui):
+    if hand_ui["animation_timer"] is not None:
+        hand_ui["canvas"].after_cancel(hand_ui["animation_timer"])
+        hand_ui["animation_timer"] = None
+
 
 def reveal_card_image(card, hand_ui, position):
     card_image = card_to_image(card)
@@ -74,7 +131,9 @@ def reveal_card_image(card, hand_ui, position):
     rendered_card["image"] = card_image
 
 def clear_hand(hand_ui):
+    cancel_hand_animation(hand_ui)
     for card in hand_ui["cards"]:
+        hand_ui["canvas"].delete(card["shadow_id"])
         hand_ui["canvas"].delete(card["item_id"])
     hand_ui["cards"].clear()
 
