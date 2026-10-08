@@ -18,6 +18,7 @@ I started this project while learning Python as a way to apply programming conce
 - 2D interface built with Tkinter Canvas
 - Automated tests for core game and betting logic
 - Controlled test scenarios for difficult-to-reproduce game states
+- Sound effects for chips and cards, light background jazz music 
 
 ## Built With
 
