@@ -1,5 +1,56 @@
 import tkinter as tk
 from time import monotonic
+from pathlib import Path
+import pygame
+
+card_slide_sound = None
+chip_clink_sound = None
+
+
+def initialize_card_audio():
+    global card_slide_sound
+    # Load once at startup; playback runs alongside Tkinter's animation frames.
+    try:
+        pygame.mixer.init()
+        sound_path = Path(__file__).parent / "blackjack_ui_assets/sounds/card_slide.wav"
+        card_slide_sound = pygame.mixer.Sound(str(sound_path))
+        card_slide_sound.set_volume(0.2)
+    except (pygame.error, OSError) as error:
+        print(f"Card audio unavailable: {error}")
+
+
+def initialize_chip_audio():
+    global chip_clink_sound
+    if not pygame.mixer.get_init():
+        return
+    try:
+        sound_path = Path(__file__).parent / "blackjack_ui_assets/sounds/chip_clink.wav"
+        chip_clink_sound = pygame.mixer.Sound(str(sound_path))
+        chip_clink_sound.set_volume(0.6)
+    except (pygame.error, OSError) as error:
+        print(f"Chip audio unavailable: {error}")
+
+
+def play_chip_clink():
+    if chip_clink_sound is not None:
+        chip_clink_sound.play()
+
+
+def start_background_music():
+    if not pygame.mixer.get_init():
+        return
+    try:
+        music_path = Path(__file__).parent / "blackjack_ui_assets/sounds/deadly_roulette.mp3"
+        pygame.mixer.music.load(str(music_path))
+        pygame.mixer.music.set_volume(0.12)  # Keep music softer than card and chip effects.
+        pygame.mixer.music.play(loops=-1, fade_ms=1500)
+    except (pygame.error, OSError) as error:
+        print(f"Background music unavailable: {error}")
+
+
+def close_card_audio():
+    pygame.mixer.music.stop()
+    pygame.mixer.quit()
 
 CARD_GAP = 10 #! leaves 10 pixels between edge of one card and next
 MAX_ROW_WIDTH = 600 #! keep hands within the left play area, clear of the controls
@@ -92,6 +143,8 @@ def add_card_image(card, hand_ui, position, face_down=False, arrange=True):
         layout_hand(hand_ui)
 
 def animate_card(hand_ui, position, start_x, start_y, on_complete, duration_ms=450):
+    if card_slide_sound is not None:
+        card_slide_sound.play()
     canvas = hand_ui["canvas"]
     cards = hand_ui["cards"]
     starts = tuple((start_x, start_y) if index == position else canvas.coords(card["item_id"])

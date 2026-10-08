@@ -66,6 +66,7 @@ def close_game():
     cancel_chip_animation()
     cancel_hand_animation(player_card_ui)
     cancel_hand_animation(dealer_card_ui)
+    close_card_audio()
     window.destroy()
 
 #% Game functions (Blackjack)
@@ -161,6 +162,7 @@ def animate_bet_chip(amount, duration_ms=450):
         else:
             game_canvas.delete("moving_bet_chip")
             update_bet_display()
+            play_chip_clink()  # One contact sound when the chip reaches the pot's rim.
             if betting_active:
                 set_button_state(deal_button, "normal")
                 set_button_state(clear_bet_button, "normal")
@@ -387,6 +389,9 @@ def new_game(test_hands=None):
 
 #% Main Window
 window = tk.Tk() 
+initialize_card_audio()
+initialize_chip_audio()
+start_background_music()
 #! creates the main application window and returns it, window stores it
 window.protocol("WM_DELETE_WINDOW", close_game)
 window.title("Blackjack")#! window title
