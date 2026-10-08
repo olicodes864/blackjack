@@ -1,4 +1,4 @@
-# 🃏 Blackjack
+# 🃏 Blackjack Version 1.0
 
 A 2D Blackjack game built from scratch using **Python and Tkinter**.
 
@@ -30,7 +30,6 @@ I started this project while learning Python as a way to apply programming conce
 
 Planned additions include:
 
-- Sound effects and music
 - Further UI polish
 - Additional Blackjack features (Split, double, side bets)
 - Explore ML-based player behaviour modelling
